@@ -138,9 +138,13 @@ select.sel{font-size:12px;padding:4px 8px;border-radius:16px;border:1px solid va
 .menu-pr{font-weight:700;white-space:nowrap}
 .hot{background:var(--red-bg);color:var(--red);font-size:10px;font-weight:700;padding:1px 4px;border-radius:3px}
 .note-box{background:var(--blue-bg);border-left:3px solid var(--blue);border-radius:0 var(--rs) var(--rs) 0;padding:9px 11px;font-size:13px;color:var(--blue);margin-bottom:12px;line-height:1.6}
-.map-box{height:160px;border-radius:var(--rs);overflow:hidden;margin-bottom:12px;border:1px solid var(--border)}
+.map-box{height:160px;border-radius:var(--rs);overflow:hidden;margin-bottom:12px;border:1px solid var(--border);background:var(--bg)}
 .map-box iframe{width:100%;height:100%;border:none}
-.mactions{display:flex;gap:6px}
+.map-box.loading{display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px}
+/* カード写真 */
+.card-photo{width:100%;height:120px;object-fit:cover;border-radius:var(--rs) var(--rs) 0 0;margin-bottom:8px;background:var(--bg);display:block}
+.card-photo-wrap{margin:-0.875rem -0.875rem 8px;overflow:hidden;border-radius:var(--r) var(--r) 0 0;height:120px;background:var(--bg)}
+.card-photo-wrap img{width:100%;height:100%;object-fit:cover;display:block}
 .mbtn{flex:1;padding:9px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;color:var(--text);transition:all .12s;display:flex;align-items:center;justify-content:center;gap:4px}
 .mbtn:hover{background:var(--bg)}
 .mbtn.primary{background:var(--red);color:#fff;border-color:var(--red)}
@@ -755,15 +759,39 @@ async function fetchUserReviews(shopId) {
   }
 }
 
-// GASに口コミを投稿（POST）
+// GASに口コミを投稿（フォームエンコード方式でCORSを回避）
 async function postReviewToGAS(shopId, shopName, name, rating, comment) {
   if (!GAS_URL) return { success: false };
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action:"postReview", shopId, shopName, name, rating, comment }),
-  });
-  return await res.json();
+  // GASはno-corsだとレスポンスが読めないが投稿は成功する
+  // FormDataを使ってPOSTする
+  try {
+    const params = new URLSearchParams();
+    params.append("action",   "postReview");
+    params.append("shopId",   shopId);
+    params.append("shopName", shopName);
+    params.append("name",     name);
+    params.append("rating",   rating);
+    params.append("comment",  comment);
+
+    // GAS URL に直接GETパラメータとして送る方法（CORSを完全回避）
+    const getUrl = `${GAS_URL}?action=postReview&shopId=${encodeURIComponent(shopId)}&shopName=${encodeURIComponent(shopName)}&name=${encodeURIComponent(name)}&rating=${rating}&comment=${encodeURIComponent(comment)}`;
+    const res = await fetch(getUrl);
+    const data = await res.json();
+    return data;
+  } catch(e) {
+    // フォールバック: no-corsで送信（レスポンスは読めないが投稿は成功）
+    try {
+      await fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action:"postReview", shopId, shopName, name, rating, comment }),
+      });
+      return { success: true }; // no-corsでは成功と仮定
+    } catch(e2) {
+      return { success: false };
+    }
+  }
 }
 
 // ═══════════════════════════════════════
@@ -850,7 +878,11 @@ function render() {
     area.innerHTML = list.map(s=>{
       const ur = getCachedRating(s.id);
       const rc = getCachedCount(s.id);
+      const photoHtml = s.photoUrl
+        ? `<div class="card-photo-wrap"><img src="${s.photoUrl}" alt="${s.name}" loading="lazy" onerror="this.parentNode.style.display='none'"></div>`
+        : "";
       return `<div class="card${s.isNew?" isnew":""}${s.worth?" isw":""}" onclick="openModal(${s.id})">
+        ${photoHtml}
         <div class="bdg-row">
           ${s.isNew?'<span class="bdg bdg-new">NEW</span>':""}
           ${s.worth?'<span class="bdg bdg-w">★おすすめ</span>':""}
@@ -946,9 +978,7 @@ function openModal(id) {
       <div id="aiMenus"></div>
 
       <div class="sec-ttl">Google マップ</div>
-      <div class="map-box" id="mapBox">
-        <iframe src="https://www.google.com/maps/embed/v1/search?key=${MAPS_KEY}&q=${encodeURIComponent(s.name+" 大阪市北区梅田 大阪駅前"+s.bld)}&language=ja&region=JP" allowfullscreen loading="lazy"></iframe>
-      </div>
+      <div class="map-box loading" id="mapBox">📍 地図を読み込み中...</div>
 
       <div class="sec-ttl">みんなの口コミ・評価</div>
       <div class="review-form">
@@ -1056,26 +1086,31 @@ function updateReviewsList(data) {
 
 // GAS連携（Googleマップ情報 + ユーザー口コミ）
 async function loadGASReviews(shop) {
-  // ユーザー口コミをGASから取得して表示
+  // ① マップを遅延読み込み（モーダルが開いてから500ms後）
+  setTimeout(() => {
+    const box = document.getElementById("mapBox");
+    if (box && box.classList.contains("loading")) {
+      box.classList.remove("loading");
+      box.innerHTML = `<iframe src="https://www.google.com/maps/embed/v1/search?key=${MAPS_KEY}&q=${encodeURIComponent(shop.name+" 大阪市北区梅田 大阪駅前"+shop.bld)}&language=ja&region=JP" allowfullscreen loading="lazy"></iframe>`;
+    }
+  }, 500);
+
+  // ② ユーザー口コミをGASから取得して表示
   fetchUserReviews(shop.id).then(data=>{
-    // モーダルのタイトル部分の評価を更新
     if(data.avg && data.count) {
       const msub = document.querySelector(".msub");
-      if(msub) {
-        const existing = document.getElementById("userRatingBadge");
-        if(!existing) {
-          const span = document.createElement("span");
-          span.id="userRatingBadge";
-          span.innerHTML=`<span>・</span><span>👥 ${data.avg.toFixed(1)}（${data.count}件）</span>`;
-          msub.appendChild(span);
-        }
+      if(msub && !document.getElementById("userRatingBadge")) {
+        const span = document.createElement("span");
+        span.id="userRatingBadge";
+        span.innerHTML=`<span>・</span><span>👥 ${data.avg.toFixed(1)}（${data.count}件）</span>`;
+        msub.appendChild(span);
       }
     }
     updateReviewsList(data);
-    render(); // カード評価も更新
+    render();
   });
 
-  // Google Places情報を取得
+  // ③ Google Places情報を取得
   if(!GAS_URL) return;
   try {
     const res = await fetch(`${GAS_URL}?action=getReviews&name=${encodeURIComponent(shop.name)}&building=${encodeURIComponent(shop.bld)}`);
@@ -1103,9 +1138,13 @@ async function loadGASReviews(shop) {
       const el = document.getElementById("aiMenus");
       if(el) el.innerHTML = `<div class="sec-ttl" style="margin-top:10px">🤖 口コミから抽出したメニュー</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">${data.aiMenus.map(m=>`<span style="background:var(--red-bg);color:var(--red);font-size:12px;padding:3px 9px;border-radius:10px">${m}</span>`).join("")}</div>`;
     }
+    // 写真があればマップの上に差し替え
     if(data.photoUrl) {
       const box = document.getElementById("mapBox");
-      if(box) box.innerHTML = `<img src="${data.photoUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"><iframe src="https://www.google.com/maps/embed/v1/search?key=${MAPS_KEY}&q=${encodeURIComponent(shop.name+" 大阪市北区梅田 大阪駅前"+shop.bld)}&language=ja" allowfullscreen loading="lazy" style="width:100%;height:100%;border:none"></iframe>`;
+      if(box) {
+        box.classList.remove("loading");
+        box.innerHTML = `<img src="${data.photoUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`;
+      }
     }
   } catch(e) {}
 }
