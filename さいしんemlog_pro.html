@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エムログPRO - 駅前ビルランチ検索</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f3ee;--surface:#fff;--surface2:#f0ede6;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.18);
+  --text:#1a1814;--text2:#6b6560;--text3:#9c9690;
+  --red:#c84b2f;--red-bg:#fdf0ed;
+  --blue:#2a5fa5;--blue-bg:#edf2fb;
+  --gold:#b8860b;--gold-bg:#fdf8e6;
+  --green:#2d7a45;--green-bg:#edf7f0;
+  --r:12px;--rs:8px;
+}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1rem;display:flex;align-items:center;gap:0.75rem;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.logo{display:flex;align-items:flex-end;gap:3px;white-space:nowrap}
+.logo-badge{font-size:10px;background:var(--red);color:#fff;padding:1px 5px;border-radius:4px;font-weight:700;vertical-align:middle}
+.hdr-search{flex:1;max-width:260px;display:flex;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:0 10px;gap:5px}
+.hdr-search input{border:none;background:transparent;font-size:13px;font-family:inherit;color:var(--text);outline:none;flex:1;padding:6px 0}
+.hdr-search input::placeholder{color:var(--text3)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.sync-badge{font-size:11px;color:var(--text3);white-space:nowrap}
+
+/* NEWS */
+.news{background:#1a1814;color:#fff;padding:7px 1rem;display:flex;align-items:center;gap:8px;overflow:hidden}
+.news-tag{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.news-wrap{overflow:hidden;flex:1}
+.news-txt{font-size:12px;color:rgba(255,255,255,0.85);white-space:nowrap;display:inline-block;animation:tick 30s linear infinite}
+@keyframes tick{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+
+/* MAIN */
+.main{max-width:1100px;margin:0 auto;padding:1rem 1rem 4rem}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:0.625rem 0.75rem;text-align:center}
+.stat-n{font-family:'M PLUS Rounded 1c',sans-serif;font-size:22px;font-weight:700;color:var(--red);line-height:1;margin-bottom:2px}
+.stat-l{font-size:11px;color:var(--text3)}
+
+/* CONTROLS */
+.ctrl{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0.75rem;margin-bottom:0.875rem}
+.ctrl-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ctrl-row+.ctrl-row{margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+.ctrl-lbl{font-size:11px;font-weight:500;color:var(--text3);white-space:nowrap;min-width:40px}
+.chips{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.chip{font-size:12px;padding:4px 10px;border-radius:16px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s;white-space:nowrap;font-family:inherit}
+.chip:hover{border-color:var(--border2);background:var(--bg)}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red)}
+.chip.on.b{background:var(--blue);border-color:var(--blue)}
+.ctrl-r{margin-left:auto;display:flex;gap:5px;align-items:center}
+select.sel{font-size:12px;padding:4px 8px;border-radius:16px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;outline:none}
+.vbtns{display:flex;gap:3px}
+.vbtn{width:28px;height:28px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:all .12s}
+.vbtn.on{background:var(--text);color:#fff;border-color:var(--text)}
+
+/* META */
+.meta{display:flex;align-items:center;gap:6px;margin-bottom:0.625rem;font-size:12px;color:var(--text3)}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.lst{display:flex;flex-direction:column}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0.875rem;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.card:hover{border-color:var(--border2);box-shadow:0 4px 20px rgba(0,0,0,0.08);transform:translateY(-1px)}
+.card.isnew{border-color:rgba(200,75,47,0.35)}
+.card.isnew::before,.card.isw::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.card.isnew::before{background:var(--red)}
+.card.isw::before{background:var(--gold)}
+.bdg-row{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;min-height:20px}
+.bdg{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.bdg-new{background:var(--red-bg);color:var(--red)}
+.bdg-w{background:var(--gold-bg);color:var(--gold)}
+.bdg-ln{background:var(--green-bg);color:var(--green)}
+.card-icon{font-size:20px;margin-bottom:3px}
+.card-name{font-size:14px;font-weight:700;line-height:1.3;margin-bottom:3px}
+.card-bld{font-size:11px;color:var(--text3);margin-bottom:5px}
+.card-genre{display:inline-block;font-size:11px;padding:2px 7px;background:var(--surface2);color:var(--text2);border-radius:8px;margin-bottom:6px}
+.card-bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:4px}
+.card-price{font-family:'M PLUS Rounded 1c',sans-serif;font-size:15px;font-weight:700}
+.card-price span{font-size:11px;font-weight:400;color:var(--text3)}
+.card-rating{display:flex;align-items:center;gap:2px;font-size:12px;color:var(--text2)}
+.star{color:#f0a500;font-size:12px}
+.card-dist{display:flex;align-items:center;gap:2px;font-size:11px;color:var(--text3);margin-top:4px}
+.card-rec{margin-top:5px;font-size:11px;color:var(--text3);background:var(--bg);border-radius:var(--rs);padding:3px 7px;line-height:1.4}
+/* ユーザー評価バー */
+.user-rating-bar{display:flex;align-items:center;gap:4px;margin-top:5px}
+.u-stars{display:flex;gap:1px}
+.u-star{color:#ddd;font-size:13px;cursor:pointer;transition:color .1s}
+.u-star.lit{color:#f0a500}
+.u-count{font-size:10px;color:var(--text3)}
+
+/* LIST ROW */
+.lrow{background:var(--surface);border-bottom:1px solid var(--border);padding:0.75rem 0.875rem;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .1s}
+.lrow:first-child{border-top:1px solid var(--border);border-radius:var(--r) var(--r) 0 0}
+.lrow:last-child{border-radius:0 0 var(--r) var(--r)}
+.lrow:only-child{border-radius:var(--r)}
+.lrow:hover{background:var(--bg)}
+.lrow-icon{width:38px;height:38px;background:var(--bg);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid var(--border)}
+.lrow-info{flex:1;min-width:0}
+.lrow-name{font-size:14px;font-weight:700}
+.lrow-sub{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.lrow-r{text-align:right;flex-shrink:0}
+.lrow-price{font-weight:700;font-size:13px}
+.lrow-dist{font-size:11px;color:var(--text3)}
+
+/* EMPTY */
+.empty{text-align:center;padding:3rem 1rem;color:var(--text3)}
+.empty-ic{font-size:40px;margin-bottom:8px}
+
+/* MODAL */
+.moverlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:1rem}
+.moverlay.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:430px;max-height:92vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.mhdr{padding:1.125rem 1.125rem 0;position:sticky;top:0;background:var(--surface);z-index:1}
+.mclose{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;background:var(--bg);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text2)}
+.mbody{padding:0 1.125rem 1.125rem}
+.mtitle{font-size:19px;font-weight:700;margin-bottom:2px}
+.msub{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.mdiv{height:1px;background:var(--border);margin:12px 0}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.info-box{background:var(--bg);border-radius:var(--rs);padding:8px 10px}
+.info-lbl{font-size:10px;color:var(--text3);font-weight:500;margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em}
+.info-val{font-size:14px;font-weight:700}
+.sec-ttl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.menu-lst{background:var(--bg);border-radius:var(--rs);overflow:hidden;margin-bottom:12px}
+.menu-row{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border);font-size:13px}
+.menu-row:last-child{border-bottom:none}
+.menu-nm{color:var(--text);display:flex;align-items:center;gap:4px}
+.menu-pr{font-weight:700;white-space:nowrap}
+.hot{background:var(--red-bg);color:var(--red);font-size:10px;font-weight:700;padding:1px 4px;border-radius:3px}
+.note-box{background:var(--blue-bg);border-left:3px solid var(--blue);border-radius:0 var(--rs) var(--rs) 0;padding:9px 11px;font-size:13px;color:var(--blue);margin-bottom:12px;line-height:1.6}
+.map-box{height:160px;border-radius:var(--rs);overflow:hidden;margin-bottom:12px;border:1px solid var(--border)}
+.map-box iframe{width:100%;height:100%;border:none}
+.mactions{display:flex;gap:6px}
+.mbtn{flex:1;padding:9px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;color:var(--text);transition:all .12s;display:flex;align-items:center;justify-content:center;gap:4px}
+.mbtn:hover{background:var(--bg)}
+.mbtn.primary{background:var(--red);color:#fff;border-color:var(--red)}
+.mbtn.primary:hover{background:#b03d24}
+
+/* ユーザーレビューセクション */
+.review-form{background:var(--bg);border-radius:var(--rs);padding:10px 12px;margin-bottom:10px;border:1px solid var(--border)}
+.review-form-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px}
+.star-select{display:flex;gap:4px;margin-bottom:8px}
+.star-pick{font-size:22px;cursor:pointer;color:#ddd;transition:color .1s;line-height:1}
+.star-pick.lit{color:#f0a500}
+.review-name{width:100%;padding:6px 9px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;margin-bottom:6px}
+.review-name:focus{border-color:var(--blue)}
+.review-txt{width:100%;padding:6px 9px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;resize:vertical;min-height:60px;margin-bottom:6px}
+.review-txt:focus{border-color:var(--blue)}
+.review-submit{width:100%;padding:8px;border-radius:var(--rs);border:none;background:var(--red);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .12s}
+.review-submit:hover{background:#b03d24}
+.review-item{background:var(--surface);border-radius:var(--rs);padding:9px 11px;border:1px solid var(--border);margin-bottom:6px}
+.review-item-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.review-author{font-size:12px;font-weight:700;color:var(--text)}
+.review-date{font-size:10px;color:var(--text3)}
+.review-stars{color:#f0a500;font-size:12px}
+.review-body{font-size:12px;color:var(--text2);line-height:1.6}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:1fr 1fr}
+  .hdr-search{display:none}
+  .ctrl-r{width:100%;justify-content:flex-end}
+  .hdr{padding:0 0.75rem;gap:0.5rem}
+  .logo{font-size:15px}
+  .sync-badge{display:none}
+}
+@media(max-width:400px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="logo">
+    <img src="data:image/webp;base64,UklGRhoEAABXRUJQVlA4IA4EAABwFQCdASpIACwAPlEkj0UjoiEUTf0YOAUEtgBbgNC/gNDN+Kv6AdKWFT67yrzgNtT5gP1A9ZD0AbwB6AHlw+xJ/f/9r6ZDyfzqLHXbAegHayeSr4A3hXnj/2H2zfG5/heUr6a/6X5GfQL/Kv6N/mPzU+G7qKP2AVnJ4i3BSL39bp+7SM/PHf2xQW3g+N87anoMkGxIkf5qTPPGIrJx66LUfshfu+P3/wKZZhc+jcS6M10kPAAA/sgvMCT2H3gK/rFNZrMV//rFP6VnOZpR1/6VDFobRv0JfUxjseXexq8tvupShP7dlwMyjvLAvltqXfi9ncHyUrIOF3Mk9Sykl3VE6J6tqX6iVQ5xWlEkPugWQZ4c9oQN/xaPm8fJ/V2OP4FBp2OkRZwH+qbsXTcyTYISWjf1IM1Qysj9j34LxpsmskKMiIew6t/WA/qiMRnOzlXelBp9ex0/lcHFWYTUW1No2WpFsIBVSE+oKuA4/MjjrZsFFOv0tAg7N0g/wMxi6Vvw//C2HzSQOkwMB21O7G27ox6Cwp1neUlxnu7XNapSp8gbE2lBRrd0d6MUmbJfYeh+Iu2sm3NJrWX4lmvlew/EOsMMNIf9/f9S0yafuUz5QEk62iof9bY8NH7fqawV//rWYP9uujaSSgyUpXbWkBL+X6y9DqEUtrSLzbiwUZLeHNFuyyNpOJ7eKcHSycI4PNERSFaxBbfy+aghGCXGa6dR5ysPGx/KQDqjdVY9Dq+BYd4LQP9iQqLNUMp5RtBCroUerxJhecb9oNjzBWLDhPPzjqn5Q4V1boYuN1DvYf1VaiJ8NwF94gicTV66xrliZ64Ff9P/4UzboP/1qnfV4vS7uO/5LfWPExV5mvRupuyNj4peeu8v45m5qi9RDGaqZG/AzdMudVuI1llK9xfsZmSxcuUBf524CU2jPcYouH2kCmp84LUms5vlehm7avAsNwHTXEY1/FZ1ctN/yipxujXpDBeIRW9+w4RvxxiOG+kSLOd/4PCY6PcE2SO0j1XrS3Z5OYz7fU9rT/ykg7+ahZ3UxnszaU5z1ipvmf/mr3qIYbvkpu22vRQePidGWhKaP5Z6X7kSjo6/mh5uM/od+pBoh7AN50XDhEvFg9/8fTe1//TI9X6/5voyDBaLTydCearTQ+A4TUhmPut7uiw8XNYFC4wHfqa3N7nf1M/dHmL1MgGy7imccCcPQEunCXaJAf+aj6GnwdF9rub+Xw9ulVLDWV5jzmM3xll+bl7r/uixbSQAk2ca5TpyiCxM4WNAv4QCIle/Ei/QhHyVokmPtav2/3t/GZMNAea3ZLL+rL/vUtHyLNA1FHt1msfz/XnCBQ99Ss8iJa5nUgxNvejczgI7c7bl3UHbmEDbuKgAAAA=" alt="エムログ" style="height:38px;width:auto;display:block;">
+    <span class="logo-badge" style="font-size:9px;padding:1px 4px;margin-left:2px;align-self:flex-end;margin-bottom:2px">PRO</span>
+  </div>
+  <div class="hdr-search">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="店名・メニューで検索...">
+  </div>
+  <div class="hdr-right">
+    <span class="sync-badge" id="syncBadge">📋 内蔵データ</span>
+  </div>
+</header>
+
+<div class="news">
+  <span class="news-tag">NEW</span>
+  <div class="news-wrap"><span class="news-txt" id="newsTxt"></span></div>
+</div>
+
+<main class="main">
+  <div class="stats">
+    <div class="stat"><div class="stat-n" id="sTotal">0</div><div class="stat-l">飲食店 合計</div></div>
+    <div class="stat"><div class="stat-n" id="sNew" style="color:var(--red)">0</div><div class="stat-l">NEW オープン</div></div>
+    <div class="stat"><div class="stat-n" id="sWorth" style="color:var(--gold)">0</div><div class="stat-l">行く価値あり</div></div>
+    <div class="stat"><div class="stat-n" id="sUnder" style="color:var(--green)">0</div><div class="stat-l">〜800円ランチ</div></div>
+  </div>
+
+  <div class="ctrl">
+    <div class="ctrl-row">
+      <span class="ctrl-lbl">ジャンル</span>
+      <div class="chips" id="genreChips">
+        <button class="chip on" data-v="all">すべて</button>
+        <button class="chip" data-v="ラーメン">🍜 ラーメン</button>
+        <button class="chip" data-v="うどん・そば">🍜 うどん・そば</button>
+        <button class="chip" data-v="担担麺">🌶 担担麺</button>
+        <button class="chip" data-v="定食">🍱 定食</button>
+        <button class="chip" data-v="カレー">🍛 カレー</button>
+        <button class="chip" data-v="イタリアン">🍝 イタリアン</button>
+        <button class="chip" data-v="中華">🥟 中華</button>
+        <button class="chip" data-v="韓国料理">🥩 韓国</button>
+        <button class="chip" data-v="タイ・アジア">🌏 タイ・アジア</button>
+        <button class="chip" data-v="沖縄料理">🌺 沖縄</button>
+        <button class="chip" data-v="カフェ・喫茶">☕ カフェ</button>
+        <button class="chip" data-v="居酒屋・立呑み">🍺 居酒屋</button>
+        <button class="chip" data-v="串カツ">🍢 串カツ</button>
+        <button class="chip" data-v="焼き鳥">🍗 焼き鳥</button>
+        <button class="chip" data-v="海鮮">🐟 海鮮</button>
+        <button class="chip" data-v="洋食">🍽 洋食</button>
+        <button class="chip" data-v="ハンバーガー">🍔 バーガー</button>
+        <button class="chip" data-v="寿司">🍣 寿司</button>
+        <button class="chip" data-v="焼肉">🥩 焼肉</button>
+        <button class="chip" data-v="肉料理">🥩 ステーキ</button>
+        <button class="chip" data-v="フレンチ・洋食">🍽 フレンチ</button>
+        <button class="chip" data-v="和食・居酒屋">🌸 和食</button>
+        <button class="chip" data-v="ベトナム料理">🍜 ベトナム</button>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-lbl">ビル</span>
+      <div class="chips" id="bldChips">
+        <button class="chip on" data-v="all">すべて</button>
+        <button class="chip" data-v="第1ビル">第1ビル</button>
+        <button class="chip" data-v="第2ビル">第2ビル</button>
+        <button class="chip" data-v="第3ビル">第3ビル</button>
+        <button class="chip" data-v="第4ビル">第4ビル</button>
+      </div>
+      <div class="ctrl-r">
+        <select class="sel" id="budgetSel">
+          <option value="all">予算：全部</option>
+          <option value="600">〜600円</option>
+          <option value="800">〜800円</option>
+          <option value="1000">〜1,000円</option>
+          <option value="1500">〜1,500円</option>
+        </select>
+        <select class="sel" id="sortSel">
+          <option value="rating">評価順</option>
+          <option value="user_rating">みんなの評価</option>
+          <option value="price_asc">安い順</option>
+          <option value="price_desc">高い順</option>
+          <option value="distance">近い順</option>
+          <option value="new">新着順</option>
+        </select>
+        <div class="vbtns">
+          <button class="vbtn on" id="btnGrid" title="グリッド">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </button>
+          <button class="vbtn" id="btnList" title="リスト">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="meta"><span id="metaCount" style="font-weight:500;color:var(--text2)">0件</span>表示中<span id="metaWorth"></span></div>
+  <div id="shopArea"></div>
+</main>
+
+<div class="moverlay" id="moverlay">
+  <div class="modal" id="modal"><div id="minner"></div></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxUxNRzOiu9J-rE9_j4yOwLR9oB_bpfTcqyBcYVoAuS9SWuV1fr7PD2-3VrEwNz0A-U/exec";
+const MAPS_KEY = "AIzaSyAQivDCYu7j0m09cfoRUbrGBTBygC8fnP0";
+
+// ═══════════════════════════════════════
+// NEWS
+// ═══════════════════════════════════════
+const NEWS = [
+  "🆕 第4ビルB1F「ペペロンチーノ専門店 ぺろん」2026年3月オープン！",
+  "🆕 第4ビルB2F「特製鯵フライと沖縄SOBAR がんじゅー」2026年5月オープン！",
+  "🆕 第1ビルB2F「立呑パーラー 西澤商店」2026年5月オープン！",
+  "🆕 第4ビルB2F「肉蕎麦 なり田」2026年4月オープン！",
+  "🆕 第2ビルB2F「焼鳥スタンドつくも99」2026年5月オープン！",
+  "⭐ みんなの評価機能が追加されました！お店にコメントを残してみよう",
+];
+
+// ═══════════════════════════════════════
+// 店舗データ（精査済み・大阪駅前第○ビル所属確認済み）
+// ═══════════════════════════════════════
+const SHOPS = [
+  // ── 第4ビル B1F ──────────────────────
+  {id:101,name:"汁なし担担麺専門 キング軒",bld:"第4ビル",fl:"B1F",genre:"担担麺",icon:"🌶",price:900,rating:4.6,dist:60,rec:"汁なし担担麺（辛さ選択可）",hours:"11:00〜15:00",closed:"日・祝",isNew:false,worth:true,
+   note:"辛さ1〜10まで選択可。5辛以上は本気の辛さ。12:30頃が行列ピーク",
+   menu:[{n:"汁なし担担麺",p:900,h:true},{n:"台湾まぜそば",p:950},{n:"大盛り",p:"+100"},{n:"ランチセット（スープ+ライス）",p:1050}]},
+
+  {id:102,name:"麺's room 神虎",bld:"第4ビル",fl:"B1F",genre:"ラーメン",icon:"🍜",price:850,rating:4.4,dist:60,rec:"濃厚鶏白湯らーめん",hours:"11:00〜14:30",closed:"土・日・祝",isNew:true,worth:false,
+   note:"2026年新店。鶏白湯ベースの濃厚スープ。13時以降が比較的空いている",
+   menu:[{n:"鶏白湯らーめん",p:850,h:true},{n:"塩らーめん",p:800},{n:"ランチセット（小ライス付）",p:980}]},
+
+  {id:103,name:"丸亀製麺 大阪駅前第4ビル店",bld:"第4ビル",fl:"B1F",genre:"うどん・そば",icon:"🍜",price:480,rating:3.9,dist:60,rec:"釜あげうどん（並）",hours:"10:30〜21:00",closed:"なし",isNew:false,worth:false,
+   note:"早い安い旨いの三拍子。天ぷら追加で充実ランチに",
+   menu:[{n:"釜あげうどん 並",p:440},{n:"かけうどん 並",p:380},{n:"天ぷら各種",p:100},{n:"ざるうどん 並",p:490}]},
+
+  {id:104,name:"ペペロンチーノ専門店 ぺろん",bld:"第4ビル",fl:"B1F",genre:"イタリアン",icon:"🍝",price:780,rating:4.3,dist:60,rec:"明太子ペペロンチーノ",hours:"11:00〜14:30",closed:"土・日・祝",isNew:true,worth:false,
+   note:"2026年3月オープン。専門店だけあって麺の茹で加減が絶妙",
+   menu:[{n:"明太子ペペロンチーノ",p:780,h:true},{n:"しらす大葉ペペロンチーノ",p:820},{n:"ランチセット（スープ付）",p:950}]},
+
+  {id:105,name:"オステリアガウダンテ",bld:"第4ビル",fl:"B1F",genre:"イタリアン",icon:"🍝",price:1200,rating:4.2,dist:60,rec:"本日のパスタランチ",hours:"11:30〜14:00",closed:"土・日・祝",isNew:false,worth:true,
+   note:"本格イタリアン。日替わりパスタは素材にこだわりあり",
+   menu:[{n:"ランチパスタセット",p:1200,h:true},{n:"ピッツァランチ",p:1350},{n:"前菜盛り合わせ",p:800}]},
+
+  {id:106,name:"珈琲の辞書 第二章",bld:"第4ビル",fl:"B1F",genre:"カフェ・喫茶",icon:"☕",price:700,rating:4.1,dist:60,rec:"日替わりサンドセット",hours:"8:00〜18:00",closed:"日・祝",isNew:false,worth:false,
+   note:"朝から使えるカフェ。軽めランチならここ。席数多く長居しやすい",
+   menu:[{n:"日替わりサンドセット（コーヒー付）",p:700},{n:"ホットケーキセット",p:650},{n:"コーヒー各種",p:450}]},
+
+  {id:107,name:"The secondroom cafe",bld:"第4ビル",fl:"B1F",genre:"カフェ・喫茶",icon:"☕",price:850,rating:4.0,dist:60,rec:"アボカドトーストセット",hours:"9:00〜17:00",closed:"日・祝",isNew:false,worth:false,
+   note:"おしゃれ空間。女性スタッフに人気。プレートランチはボリュームあり",
+   menu:[{n:"アボカドトーストセット",p:850,h:true},{n:"プレートランチ",p:980},{n:"パンケーキ",p:720}]},
+
+  {id:108,name:"たこ焼酒場 しん家",bld:"第4ビル",fl:"B1F",genre:"居酒屋・立呑み",icon:"🐙",price:600,rating:4.1,dist:60,rec:"たこ焼きランチセット",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:false,
+   note:"大阪名物たこ焼きがランチで食べられる。出汁が効いた本格派",
+   menu:[{n:"たこ焼きランチセット（8個）",p:600,h:true},{n:"たこ焼き（12個）",p:750}]},
+
+  {id:109,name:"大富豪",bld:"第4ビル",fl:"B1F",genre:"居酒屋・立呑み",icon:"🍺",price:600,rating:3.9,dist:60,rec:"焼き鳥ランチセット",hours:"11:00〜14:30",closed:"日",isNew:false,worth:false,
+   note:"安くてボリューム満点。焼き鳥がランチで食べられる",
+   menu:[{n:"焼き鳥ランチセット",p:600,h:true},{n:"定食各種",p:650}]},
+
+  {id:110,name:"立ち呑み 庶民",bld:"第4ビル",fl:"B1F",genre:"居酒屋・立呑み",icon:"🍺",price:500,rating:3.8,dist:60,rec:"日替わり一品+ご飯",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"500円台でご飯が食べられる。常連のサラリーマンが多い",
+   menu:[{n:"日替わりランチ",p:500},{n:"一品料理各種",p:200},{n:"生ビール",p:280}]},
+
+  {id:111,name:"アジアンバルフロッグス",bld:"第4ビル",fl:"B1F",genre:"タイ・アジア",icon:"🌏",price:900,rating:4.0,dist:60,rec:"ガパオライス",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"アジア料理のランチプレートが充実。ガパオライスやグリーンカレーなど本格派",
+   menu:[{n:"ガパオライス",p:880,h:true},{n:"グリーンカレー",p:920},{n:"アジアンランチプレート",p:980}]},
+
+  {id:112,name:"くらふと酒場 龍",bld:"第4ビル",fl:"B1F",genre:"居酒屋・立呑み",icon:"🍺",price:750,rating:4.0,dist:60,rec:"唐揚げ定食",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:false,
+   note:"クラフトビールが豊富な居酒屋。ランチは定食スタイルで食べやすい",
+   menu:[{n:"唐揚げ定食",p:750,h:true},{n:"日替わり定食",p:700}]},
+
+  {id:113,name:"酒飲みよ大志を抱け",bld:"第4ビル",fl:"B1F",genre:"居酒屋・立呑み",icon:"🍺",price:650,rating:3.8,dist:60,rec:"日替わり定食",hours:"11:00〜14:00",closed:"土・日・祝",isNew:false,worth:false,
+   note:"量が多めで男性に人気。昼から一杯も可",
+   menu:[{n:"日替わり定食",p:650},{n:"唐揚げ定食",p:750},{n:"生姜焼き定食",p:700}]},
+
+  {id:114,name:"おしゃん亭",bld:"第4ビル",fl:"B1F",genre:"定食",icon:"🍱",price:700,rating:4.0,dist:60,rec:"魚定食",hours:"11:00〜14:00",closed:"土・日・祝",isNew:false,worth:false,
+   note:"魚定食が人気。日替わりの魚の質が良い",
+   menu:[{n:"魚定食",p:700,h:true},{n:"肉定食",p:720},{n:"日替わり定食",p:680}]},
+
+  {id:115,name:"きたがわ",bld:"第4ビル",fl:"B1F",genre:"居酒屋・立呑み",icon:"🍺",price:600,rating:3.9,dist:60,rec:"刺身定食",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"地元の常連客に愛される老舗。ランチは魚系が充実していてリーズナブル",
+   menu:[{n:"刺身定食",p:700},{n:"焼き魚定食",p:650},{n:"日替わり定食",p:600}]},
+
+  {id:116,name:"ラーメンステーション 大阪駅前第4ビル",bld:"第4ビル",fl:"B1F",genre:"ラーメン",icon:"🍜",price:800,rating:3.9,dist:60,rec:"醤油ラーメン",hours:"11:00〜21:00",closed:"なし",isNew:false,worth:false,
+   note:"駅前ビルの定番ラーメン。安定した味で毎日行ける",
+   menu:[{n:"醤油ラーメン",p:750},{n:"味噌ラーメン",p:800},{n:"チャーシュー麺",p:950}]},
+
+  // ── 第4ビル B2F ──────────────────────
+  {id:201,name:"でんがな",bld:"第4ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:700,rating:4.2,dist:60,rec:"鯖の塩焼き定食",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"昼から飲める立呑み居酒屋だが定食も充実。魚が特に美味しい。コスパ最強",
+   menu:[{n:"鯖の塩焼き定食",p:700,h:true},{n:"刺身盛り合わせ",p:600},{n:"日替わり定食",p:650}]},
+
+  {id:202,name:"特製鯵フライと沖縄SOBAR がんじゅー",bld:"第4ビル",fl:"B2F",genre:"沖縄料理",icon:"🌺",price:850,rating:4.5,dist:60,rec:"アジフライ定食 or ソーキそば",hours:"11:00〜14:30",closed:"日・祝",isNew:true,worth:true,
+   note:"2026年5月オープン。アジフライが絶品！人気爆発中で行列必至",
+   menu:[{n:"アジフライ定食",p:850,h:true},{n:"ソーキそば",p:880},{n:"チャンプルー定食",p:820}]},
+
+  {id:203,name:"煮干しらーめん 玉五郎",bld:"第4ビル",fl:"B2F",genre:"ラーメン",icon:"🍜",price:850,rating:4.3,dist:60,rec:"煮干しらーめん（濃い口）",hours:"11:00〜14:30",closed:"土・日・祝",isNew:false,worth:true,
+   note:"煮干し好きにはたまらない濃厚スープ。細麺との相性抜群",
+   menu:[{n:"煮干しらーめん",p:800},{n:"煮干しらーめん（濃い口）",p:820,h:true},{n:"つけ麺",p:900}]},
+
+  {id:204,name:"韓国料理シンガネ",bld:"第4ビル",fl:"B2F",genre:"韓国料理",icon:"🥩",price:900,rating:4.1,dist:60,rec:"プルコギ定食",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"本格韓国料理がランチで食べられる。キムチが自家製で美味しい",
+   menu:[{n:"プルコギ定食",p:900,h:true},{n:"チャプチェ定食",p:880},{n:"スンドゥブチゲ定食",p:950}]},
+
+  {id:205,name:"スワンナプームタイ",bld:"第4ビル",fl:"B2F",genre:"タイ・アジア",icon:"🍜",price:850,rating:4.2,dist:60,rec:"パッタイランチ",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"本格タイ料理。梅田でここまで本格的なタイ料理は珍しい",
+   menu:[{n:"パッタイ",p:850,h:true},{n:"グリーンカレーセット",p:900},{n:"トムヤムクンスープセット",p:950}]},
+
+  {id:206,name:"串カツ七福神",bld:"第4ビル",fl:"B2F",genre:"串カツ",icon:"🍢",price:750,rating:4.0,dist:60,rec:"串カツランチセット",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"揚げたてサクサクの串カツ。二度漬け禁止の老舗スタイル",
+   menu:[{n:"串カツランチセット（7本）",p:750},{n:"串カツランチセット（10本）",p:950},{n:"単品各種",p:90}]},
+
+  {id:207,name:"肉蕎麦 なり田",bld:"第4ビル",fl:"B2F",genre:"うどん・そば",icon:"🍜",price:900,rating:4.4,dist:60,rec:"肉蕎麦",hours:"11:00〜14:30",closed:"土・日・祝",isNew:true,worth:true,
+   note:"2026年4月オープン。出汁が絶品の肉蕎麦。肉の量が多くてコスパ◎",
+   menu:[{n:"肉蕎麦",p:900,h:true},{n:"冷やし肉蕎麦",p:920},{n:"天ぷら蕎麦",p:950}]},
+
+  {id:208,name:"おさかな屋オカピ",bld:"第4ビル",fl:"B2F",genre:"海鮮",icon:"🐟",price:900,rating:4.3,dist:60,rec:"刺身定食",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"新鮮な魚介類が自慢。刺身の鮮度が抜群",
+   menu:[{n:"刺身定食",p:900,h:true},{n:"海鮮丼",p:1050},{n:"焼き魚定食",p:850}]},
+
+  {id:209,name:"ひもの野郎",bld:"第4ビル",fl:"B2F",genre:"海鮮",icon:"🐟",price:850,rating:4.1,dist:60,rec:"干物定食",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"干物専門店ならではの絶品ランチ。炭火で焼く干物の香ばしさが格別",
+   menu:[{n:"干物定食（アジ）",p:850,h:true},{n:"干物定食（サバ）",p:800},{n:"干物盛り合わせ定食",p:1050}]},
+
+  {id:210,name:"欧風軒",bld:"第4ビル",fl:"B2F",genre:"洋食",icon:"🍽",price:850,rating:4.0,dist:60,rec:"ハヤシライス",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"老舗洋食屋。ハヤシライスとオムライスが名物",
+   menu:[{n:"ハヤシライス",p:850,h:true},{n:"オムライス",p:900},{n:"ビーフシチュー定食",p:1100}]},
+
+  {id:211,name:"喜蘭",bld:"第4ビル",fl:"B2F",genre:"中華",icon:"🥟",price:800,rating:4.0,dist:60,rec:"エビチリ定食",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"本格中華料理。エビチリとマーボ豆腐が人気",
+   menu:[{n:"エビチリ定食",p:850,h:true},{n:"麻婆豆腐定食",p:800},{n:"日替わりランチ",p:780}]},
+
+  {id:212,name:"文の助茶屋 梅田店",bld:"第4ビル",fl:"B2F",genre:"カフェ・喫茶",icon:"🍡",price:900,rating:4.2,dist:60,rec:"わらび餅セット",hours:"11:00〜17:00",closed:"日・祝",isNew:false,worth:true,
+   note:"京都の老舗甘味処の梅田店。ランチは和食御膳とわらび餅が絶品",
+   menu:[{n:"和食御膳",p:950},{n:"わらび餅セット",p:650,h:true},{n:"甘味各種",p:400}]},
+
+  {id:213,name:"くだものだもの",bld:"第4ビル",fl:"B2F",genre:"カフェ・喫茶",icon:"🍓",price:800,rating:4.2,dist:60,rec:"フルーツサンド",hours:"10:00〜18:00",closed:"日・祝",isNew:false,worth:false,
+   note:"新鮮フルーツを使ったメニューが揃う。フルーツサンドは絶品。女性に大人気",
+   menu:[{n:"フルーツサンド",p:650,h:false},{n:"フルーツパフェ",p:850},{n:"季節のフルーツジュース",p:500}]},
+
+  {id:214,name:"キリンケラーヤマト 東梅田店",bld:"第4ビル",fl:"B2F",genre:"洋食",icon:"🍺",price:1200,rating:4.3,dist:60,rec:"ソーセージ盛り合わせランチ",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"本格ドイツビール×ソーセージが楽しめる。ランチタイムは特別セットあり",
+   menu:[{n:"ソーセージ盛り合わせランチ",p:1200,h:true},{n:"プレッツェルセット",p:900},{n:"ドイツビール",p:700}]},
+
+  {id:215,name:"立呑み処 七津屋 第4ビル",bld:"第4ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:600,rating:4.0,dist:60,rec:"日替わり定食",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"昼から飲める立呑み。ランチ定食もあって便利",
+   menu:[{n:"日替わり定食",p:600},{n:"刺身一点盛り",p:350},{n:"生ビール",p:300}]},
+
+  // ── 第3ビル ──────────────────────────
+  {id:301,name:"インドレストラン ガウタマ",bld:"第3ビル",fl:"B2F",genre:"カレー",icon:"🍛",price:980,rating:4.5,dist:150,rec:"バターチキンカレーセット（ナン食べ放題付）",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"距離はあるが絶対行く価値あり！ナンが絶品で食べ放題",
+   menu:[{n:"バターチキンカレーセット",p:980,h:true},{n:"キーマカレーセット",p:930},{n:"ナン食べ放題（追加）",p:200},{n:"サグパニールセット",p:1020}]},
+
+  {id:302,name:"レストランOKINAWA",bld:"第3ビル",fl:"B1F",genre:"沖縄料理",icon:"🌺",price:850,rating:4.2,dist:150,rec:"ゴーヤチャンプル定食",hours:"11:00〜15:00",closed:"日・祝",isNew:false,worth:true,
+   note:"大阪で本格沖縄料理が食べられる貴重なお店",
+   menu:[{n:"ゴーヤチャンプル定食",p:850,h:true},{n:"ソーキそば",p:880},{n:"タコライス",p:820}]},
+
+  {id:303,name:"松屋 梅田駅前第3ビル店",bld:"第3ビル",fl:"B1F",genre:"定食",icon:"🍱",price:480,rating:3.5,dist:150,rec:"牛めし（並）",hours:"24時間",closed:"なし",isNew:false,worth:false,
+   note:"24時間営業。急いでいる時の最強の味方",
+   menu:[{n:"牛めし 並",p:480},{n:"定食各種",p:630},{n:"カレー",p:530}]},
+
+  {id:304,name:"餃子エイト",bld:"第3ビル",fl:"B1F",genre:"中華",icon:"🥟",price:700,rating:4.2,dist:150,rec:"焼き餃子ランチセット",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"皮が薄くてパリパリの餃子が絶品。ランチはライス・スープ付",
+   menu:[{n:"焼き餃子ランチセット（10個）",p:700,h:true},{n:"水餃子セット",p:750},{n:"担担麺セット",p:850}]},
+
+  {id:305,name:"インド料理シュリ・アルナ 第3ビル店",bld:"第3ビル",fl:"B1F",genre:"カレー",icon:"🍛",price:900,rating:4.3,dist:150,rec:"チキンカレーセット",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"ガウタマと並ぶ第3ビルのインド料理の雄。スパイスが豊かで本格的",
+   menu:[{n:"チキンカレーセット",p:900,h:true},{n:"野菜カレーセット",p:850},{n:"2種カレーセット",p:1050}]},
+
+  {id:306,name:"ちるちるにびる",bld:"第3ビル",fl:"B2F",genre:"沖縄料理",icon:"🌺",price:800,rating:4.1,dist:150,rec:"沖縄ちゃんぽん定食",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:false,
+   note:"沖縄ちゃんぽんが名物。野菜たっぷりでヘルシー",
+   menu:[{n:"沖縄ちゃんぽん定食",p:800,h:true},{n:"タコライス",p:750}]},
+
+  {id:307,name:"大衆酒場フレンチマン 第3ビル店",bld:"第3ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:700,rating:3.9,dist:150,rec:"日替わり定食",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"リーズナブルなランチ定食が充実",
+   menu:[{n:"日替わり定食",p:700},{n:"魚フライ定食",p:750},{n:"ハンバーグ定食",p:800}]},
+
+  {id:308,name:"大分からあげ専門店 野乃鳥",bld:"第3ビル",fl:"B2F",genre:"定食",icon:"🍗",price:750,rating:4.3,dist:150,rec:"からあげ定食",hours:"11:00〜15:00",closed:"日・祝",isNew:false,worth:true,
+   note:"大分名物のからあげが食べられる専門店。ジューシーで衣がサクサク",
+   menu:[{n:"からあげ定食（5個）",p:750,h:true},{n:"からあげ定食（8個）",p:950},{n:"親子丼",p:780}]},
+
+  {id:309,name:"串カツ 田中 梅田第3ビル店",bld:"第3ビル",fl:"B1F",genre:"串カツ",icon:"🍢",price:800,rating:4.1,dist:150,rec:"串カツランチセット",hours:"11:00〜14:30",closed:"なし",isNew:false,worth:false,
+   note:"品質安定のチェーン店。ランチ限定セットはコスパ◎",
+   menu:[{n:"串カツランチセット（8本）",p:800},{n:"串カツ盛り（12本）",p:1100},{n:"単品串カツ",p:88}]},
+
+  {id:310,name:"ホームズカフェ",bld:"第3ビル",fl:"B1F",genre:"カフェ・喫茶",icon:"☕",price:650,rating:3.9,dist:150,rec:"日替わりランチ",hours:"7:30〜18:00",closed:"日・祝",isNew:false,worth:false,
+   note:"朝から使えるカフェ。サラリーマンの朝の定番スポット",
+   menu:[{n:"日替わりランチ",p:650},{n:"モーニングセット",p:450},{n:"コーヒー",p:380}]},
+
+  // ── 第2ビル ──────────────────────────
+  {id:401,name:"モスバーガー 大阪駅前第2ビル店",bld:"第2ビル",fl:"B2F",genre:"ハンバーガー",icon:"🍔",price:700,rating:3.8,dist:180,rec:"モスバーガーセット",hours:"8:00〜21:00",closed:"なし",isNew:false,worth:false,
+   note:"安定の味。モーニングから使えて便利",
+   menu:[{n:"モスバーガーセット",p:700},{n:"テリヤキバーガーセット",p:730},{n:"チキンバーガーセット",p:680}]},
+
+  {id:402,name:"お立ち呑み処 たよし",bld:"第2ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:600,rating:4.0,dist:180,rec:"日替わり定食",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"立呑みだがランチ定食が充実。コスパ抜群でボリュームあり",
+   menu:[{n:"日替わり定食",p:600},{n:"焼き魚定食",p:650},{n:"から揚げ定食",p:680}]},
+
+  {id:403,name:"コーヒーハウス イフ",bld:"第2ビル",fl:"B2F",genre:"カフェ・喫茶",icon:"☕",price:750,rating:4.1,dist:180,rec:"サイフォンコーヒー＋サンド",hours:"8:00〜18:00",closed:"日・祝",isNew:false,worth:false,
+   note:"サイフォン式コーヒーが絶品。レトロな雰囲気でゆっくり落ち着ける",
+   menu:[{n:"サンドイッチセット（コーヒー付）",p:750,h:true},{n:"ホットサンド",p:500},{n:"サイフォンコーヒー",p:450}]},
+
+  {id:404,name:"焼鳥スタンドつくも99",bld:"第2ビル",fl:"B2F",genre:"焼き鳥",icon:"🍗",price:700,rating:4.2,dist:180,rec:"焼き鳥ランチセット",hours:"11:00〜14:00",closed:"日・祝",isNew:true,worth:true,
+   note:"2026年5月オープン。炭火焼きの本格焼き鳥がランチで食べられる",
+   menu:[{n:"焼き鳥ランチセット（5本）",p:700,h:true},{n:"焼き鳥丼",p:750},{n:"親子丼",p:680}]},
+
+  {id:405,name:"つるつる庵 第2ビル店",bld:"第2ビル",fl:"B1F",genre:"うどん・そば",icon:"🍜",price:700,rating:4.1,dist:180,rec:"天ざるそば",hours:"11:00〜15:00",closed:"日・祝",isNew:false,worth:false,
+   note:"創業42年の老舗そば屋。手打ちに近い蕎麦の食感が◎",
+   menu:[{n:"天ざるそば",p:850},{n:"天ぷらそばセット",p:900},{n:"かけそば",p:600}]},
+
+  {id:406,name:"スタンドエルソル",bld:"第2ビル",fl:"B1F",genre:"イタリアン",icon:"🍝",price:900,rating:4.2,dist:180,rec:"本日のパエリアランチ",hours:"11:30〜14:00",closed:"日・祝",isNew:true,worth:true,
+   note:"スペイン料理×イタリアンの融合。パエリアが本格的で人気",
+   menu:[{n:"本日のパエリアランチ",p:980,h:true},{n:"タパスプレートランチ",p:900},{n:"パスタランチ",p:850}]},
+
+  {id:407,name:"立ち呑み みねこ",bld:"第2ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:850,rating:4.0,dist:180,rec:"本日の定食",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"ランチ850円でコスパ◎。魚系が強い。常連客に愛される隠れた名店",
+   menu:[{n:"本日の定食",p:850,h:true},{n:"刺身定食",p:950},{n:"焼き魚定食",p:850}]},
+
+  {id:408,name:"焼鳥 牛たん どんたく",bld:"第2ビル",fl:"B2F",genre:"焼き鳥",icon:"🍗",price:800,rating:4.1,dist:180,rec:"牛たん定食",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"焼き鳥と牛たんの両方が楽しめる。牛たんの厚みが抜群",
+   menu:[{n:"牛たん定食（2枚）",p:900,h:true},{n:"焼き鳥定食",p:750},{n:"炭火焼きミックス定食",p:980}]},
+
+  {id:409,name:"串カツ わんさか",bld:"第2ビル",fl:"B1F",genre:"串カツ",icon:"🍢",price:700,rating:4.0,dist:180,rec:"串カツランチセット",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:false,
+   note:"アットホームな串カツ屋。ランチセットはコスパ良し",
+   menu:[{n:"串カツランチセット（8本）",p:700},{n:"ミックスフライ定食",p:750},{n:"串カツ単品",p:80}]},
+
+  {id:410,name:"韓国家庭料理 ハニ",bld:"第2ビル",fl:"B2F",genre:"韓国料理",icon:"🥩",price:850,rating:4.2,dist:180,rec:"サムギョプサル定食",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"本場の韓国家庭料理が食べられる。サムギョプサルがランチで食べられるのは貴重",
+   menu:[{n:"サムギョプサル定食",p:950,h:true},{n:"ビビンバランチ",p:800},{n:"スンドゥブ定食",p:850}]},
+
+  {id:411,name:"インド料理 ヴィノード",bld:"第2ビル",fl:"B1F",genre:"カレー",icon:"🍛",price:900,rating:4.2,dist:180,rec:"チキンカレーセット",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"本格インドカレーが梅田で食べられる。スパイスが豊かでナンが柔らかい",
+   menu:[{n:"チキンカレーセット",p:900,h:true},{n:"キーマカレーセット",p:850},{n:"2種カレーセット",p:1050}]},
+
+  {id:412,name:"いしもん 第2ビル店",bld:"第2ビル",fl:"B1F",genre:"居酒屋・立呑み",icon:"🍺",price:750,rating:4.0,dist:180,rec:"日替わり定食",hours:"11:00〜14:00",closed:"日・祝",isNew:true,worth:false,
+   note:"いしもんグループの新店。ランチはリーズナブル",
+   menu:[{n:"日替わり定食",p:750},{n:"魚定食",p:800},{n:"肉定食",p:800}]},
+
+  // ── 第1ビル B1F ──────────────────────
+  {id:501,name:"欧風カレー 十壱亭",bld:"第1ビル",fl:"B1F",genre:"カレー",icon:"🍛",price:750,rating:4.4,dist:250,rec:"欧風カレーライス",hours:"11:30〜15:00",closed:"土・日・祝",isNew:false,worth:true,
+   note:"スパイスが絶妙にバランスされた昔懐かしい欧風カレー。創業40年以上の老舗",
+   menu:[{n:"欧風カレーライス",p:750,h:true},{n:"カツカレー",p:950},{n:"チキンカレー",p:780}]},
+
+  {id:502,name:"喫茶 マヅラ",bld:"第1ビル",fl:"B1F",genre:"カフェ・喫茶",icon:"☕",price:600,rating:4.2,dist:250,rec:"サンドイッチ＋コーヒー",hours:"9:00〜18:00",closed:"日・祝",isNew:false,worth:true,
+   note:"昭和レトロな内装が独特の雰囲気。コーヒーの値段も昭和価格でリーズナブル",
+   menu:[{n:"サンドイッチセット",p:600},{n:"ナポリタン",p:650},{n:"コーヒー",p:350}]},
+
+  {id:503,name:"king of kings",bld:"第1ビル",fl:"B1F",genre:"カフェ・喫茶",icon:"☕",price:700,rating:4.0,dist:250,rec:"日替わりランチ",hours:"8:00〜20:00",closed:"日・祝",isNew:false,worth:false,
+   note:"創業40年以上の穴場の喫茶・バー。ゆったりとした時間が流れる",
+   menu:[{n:"日替わりランチ",p:700},{n:"サンドイッチセット",p:650},{n:"コーヒー",p:400}]},
+
+  {id:504,name:"新世界串カツ いっとく 第1ビル店",bld:"第1ビル",fl:"B1F",genre:"串カツ",icon:"🍢",price:800,rating:4.1,dist:250,rec:"串カツ盛り合わせランチ",hours:"11:00〜14:30",closed:"なし",isNew:false,worth:false,
+   note:"新世界スタイルの串カツが梅田で食べられる",
+   menu:[{n:"串カツ盛り合わせランチ（10本）",p:800,h:true},{n:"串カツ単品",p:80},{n:"ランチセット（5本+ご飯）",p:650}]},
+
+  {id:505,name:"居酒屋 北野",bld:"第1ビル",fl:"B1F",genre:"居酒屋・立呑み",icon:"🍺",price:600,rating:4.0,dist:250,rec:"日替わりランチ",hours:"11:00〜14:30",closed:"日",isNew:false,worth:false,
+   note:"新鮮な海の幸が食べられる大衆居酒屋。ランチ600円〜とリーズナブル",
+   menu:[{n:"日替わりランチ",p:600},{n:"刺身盛りランチ",p:800},{n:"唐揚げランチ",p:650}]},
+
+  {id:506,name:"中華料理 珉珉 梅田店",bld:"第1ビル",fl:"B1F",genre:"中華",icon:"🥟",price:800,rating:4.0,dist:250,rec:"餃子定食",hours:"11:00〜15:00",closed:"日・祝",isNew:false,worth:false,
+   note:"大阪を代表する餃子チェーン。サクサクの餃子は何個でも食べられる",
+   menu:[{n:"餃子定食（6個）",p:700,h:true},{n:"餃子定食（10個）",p:900},{n:"チャーハンセット",p:800}]},
+
+  {id:507,name:"スタンドそば 梅田",bld:"第1ビル",fl:"B1F",genre:"うどん・そば",icon:"🍜",price:500,rating:3.7,dist:250,rec:"かけそば",hours:"7:00〜20:00",closed:"なし",isNew:false,worth:false,
+   note:"立ち食いスタイルのそば屋。朝から夜まで営業。急いでいる時の強い味方",
+   menu:[{n:"かけそば",p:380},{n:"天ぷらそば",p:550},{n:"きつねそば",p:420}]},
+
+  // ── 第1ビル B2F ──────────────────────
+  {id:601,name:"華神（カシン）",bld:"第1ビル",fl:"B2F",genre:"中華",icon:"🥟",price:850,rating:4.3,dist:250,rec:"日替わりランチ（前菜付）",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"本格中華料理。ランチの日替わりセットは前菜・スープ付でコスパ◎",
+   menu:[{n:"日替わりランチセット",p:850,h:true},{n:"麻婆豆腐定食",p:880},{n:"酢豚定食",p:900}]},
+
+  {id:602,name:"銀座屋",bld:"第1ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:500,rating:4.1,dist:250,rec:"センベロランチ",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"行列ができる激安立ち飲み。センベロで有名。ランチも激安",
+   menu:[{n:"ランチ定食",p:500,h:true},{n:"一品料理（各種）",p:200},{n:"生ビール",p:300}]},
+
+  {id:603,name:"ミルクホール",bld:"第1ビル",fl:"B2F",genre:"沖縄料理",icon:"🌺",price:700,rating:4.0,dist:250,rec:"沖縄料理定食",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"沖縄料理とマスター手造りのチューハイが美味。昭和レトロな雰囲気",
+   menu:[{n:"沖縄料理定食",p:700},{n:"ゴーヤちゃんぷる定食",p:750},{n:"チューハイ",p:300}]},
+
+  {id:604,name:"千本（セボン）",bld:"第1ビル",fl:"B2F",genre:"カフェ・喫茶",icon:"🍷",price:900,rating:4.2,dist:250,rec:"ワイン＋軽食ランチ",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"ワインをお洒落に立ち飲みできて女性に人気",
+   menu:[{n:"ワイン付きランチプレート",p:900},{n:"チーズ盛り合わせ",p:600},{n:"グラスワイン",p:500}]},
+
+  {id:605,name:"立呑パーラー 西澤商店",bld:"第1ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:600,rating:4.0,dist:250,rec:"日替わり定食",hours:"11:00〜14:00",closed:"日・祝",isNew:true,worth:false,
+   note:"2026年5月オープン。レトロなパーラー風の内装が可愛い",
+   menu:[{n:"日替わり定食",p:600},{n:"一品料理各種",p:250},{n:"生ビール",p:300}]},
+
+  {id:606,name:"やきとり大富豪",bld:"第1ビル",fl:"B2F",genre:"焼き鳥",icon:"🍗",price:700,rating:3.9,dist:250,rec:"焼き鳥ランチセット",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:false,
+   note:"気軽に入れる大衆感が◎。焼き鳥がお手頃価格で食べられる",
+   menu:[{n:"焼き鳥ランチセット（5本）",p:700,h:true},{n:"焼き鳥丼",p:650},{n:"串焼き各種",p:100}]},
+
+  {id:607,name:"華神（カシン）夜の部",bld:"第1ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:650,rating:3.9,dist:250,rec:"日替わり定食",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"夜の立呑みが人気だがランチも充実",
+   menu:[{n:"日替わり定食",p:650},{n:"魚定食",p:700},{n:"肉定食",p:700}]},
+
+  {id:608,name:"ゆう寿司 梅田第1ビル店",bld:"第1ビル",fl:"B2F",genre:"寿司",icon:"🍣",price:1000,rating:4.2,dist:250,rec:"ランチ握り10貫",hours:"11:30〜14:00",closed:"土・日・祝",isNew:false,worth:true,
+   note:"リーズナブルな本格寿司。ランチの握りセットはネタが新鮮で大満足",
+   menu:[{n:"ランチ握り10貫",p:1000},{n:"特選握り12貫",p:1500},{n:"ちらし寿司",p:900}]},
+
+  {id:609,name:"ベトナム料理 フォー専門店",bld:"第1ビル",fl:"B2F",genre:"ベトナム料理",icon:"🍜",price:850,rating:4.1,dist:250,rec:"牛肉フォー",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"本格ベトナム料理。フォーのスープが絶品で体に優しい",
+   menu:[{n:"牛肉フォー",p:850,h:true},{n:"鶏肉フォー",p:800},{n:"バインミーセット",p:780}]},
+
+  {id:610,name:"17時のシアワセ",bld:"第1ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:650,rating:3.9,dist:250,rec:"日替わり定食",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"夜の立呑みが人気だがランチも充実。コスパ良しでボリュームあり",
+   menu:[{n:"日替わり定食",p:650},{n:"魚定食",p:700},{n:"肉定食",p:700}]},
+
+  // ════════════ 資料確認済み新規追加店舗 ════════════
+
+  // ── 第1ビル 追加 ──
+  {id:701,name:"玄三庵",bld:"第1ビル",fl:"1F",genre:"定食",icon:"🌾",price:900,rating:4.1,dist:250,rec:"玄米定食",hours:"11:30〜21:00",closed:"日",isNew:false,worth:true,
+   note:"玄米と健康食材にこだわった定食屋。体に優しいランチが食べたい日に◎",
+   menu:[{n:"玄米定食",p:900,h:true},{n:"日替わり健康定食",p:850},{n:"雑穀ご飯定食",p:880}]},
+
+  {id:702,name:"肴屋 あしか",bld:"第1ビル",fl:"B1F",genre:"和食・居酒屋",icon:"🐟",price:800,rating:4.0,dist:250,rec:"刺身定食",hours:"12:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"新鮮な魚をメインにした和食居酒屋。ランチは2時間限定なので早めに",
+   menu:[{n:"刺身定食",p:800,h:true},{n:"焼き魚定食",p:750},{n:"日替わり定食",p:700}]},
+
+  {id:703,name:"さかなのくち スタンド",bld:"第1ビル",fl:"B1F",genre:"海鮮",icon:"🐟",price:750,rating:4.1,dist:250,rec:"海鮮丼",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"新鮮な海鮮が食べられる立ち飲み。ランチの海鮮丼がコスパ抜群",
+   menu:[{n:"海鮮丼",p:800,h:true},{n:"刺身盛り定食",p:750},{n:"ミニ海鮮丼",p:600}]},
+
+  {id:704,name:"spice32 大阪駅前第1ビル店",bld:"第1ビル",fl:"B2F",genre:"カレー",icon:"🍛",price:850,rating:4.2,dist:250,rec:"スパイスカレー",hours:"11:00〜15:00",closed:"日・祝",isNew:false,worth:true,
+   note:"大阪スパイスカレーの人気店。毎日変わる日替わりカレーが評判",
+   menu:[{n:"日替わりスパイスカレー",p:850,h:true},{n:"2種カレープレート",p:1000},{n:"キーマカレー",p:800}]},
+
+  {id:705,name:"つるつる庵 第1ビル店",bld:"第1ビル",fl:"B2F",genre:"うどん・そば",icon:"🍜",price:700,rating:4.0,dist:250,rec:"天ざるそば",hours:"11:00〜15:00",closed:"日・祝",isNew:false,worth:false,
+   note:"第2ビルと同系列の老舗そば屋。手打ちに近い蕎麦が人気",
+   menu:[{n:"天ざるそば",p:800,h:false},{n:"天ぷらそばセット",p:850},{n:"かけそば",p:550}]},
+
+  // ── 第2ビル 追加 ──
+  {id:706,name:"いわむら（ChezDeuxieme）",bld:"第2ビル",fl:"B2F",genre:"フレンチ・洋食",icon:"🍽",price:1500,rating:4.5,dist:180,rec:"ランチコース",hours:"11:30〜14:00",closed:"土・日・祝",isNew:false,worth:true,
+   note:"本格フレンチが駅前ビルで食べられる隠れた名店。ランチコースはコスパ◎",
+   menu:[{n:"ランチコース（前菜+メイン+デザート）",p:1500,h:true},{n:"メインのみ",p:1100},{n:"スープセット",p:300}]},
+
+  {id:707,name:"金明飯店 本店",bld:"第2ビル",fl:"B2F",genre:"中華",icon:"🥟",price:850,rating:4.2,dist:180,rec:"回鍋肉定食",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"老舗中華料理店。回鍋肉と麻婆豆腐が特に評判。ボリューム満点",
+   menu:[{n:"回鍋肉定食",p:850,h:true},{n:"麻婆豆腐定食",p:850},{n:"日替わりランチ",p:800}]},
+
+  {id:708,name:"おでんとお蕎麦居酒屋 じんべえ",bld:"第2ビル",fl:"B1F",genre:"うどん・そば",icon:"🍢",price:800,rating:4.0,dist:180,rec:"おでんそばセット",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"おでんと蕎麦の組み合わせが珍しい。冬は特におでんが人気",
+   menu:[{n:"おでんそばセット",p:800,h:true},{n:"蕎麦定食",p:750},{n:"おでん盛り合わせ",p:500}]},
+
+  {id:709,name:"ワイン＆洋風お好み焼 アペロ食堂",bld:"第2ビル",fl:"B2F",genre:"洋食",icon:"🍷",price:900,rating:4.1,dist:180,rec:"洋風お好み焼きランチ",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"洋風にアレンジされたお好み焼きとワインが楽しめる。梅田では珍しいスタイル",
+   menu:[{n:"洋風お好み焼きランチ",p:900,h:true},{n:"パスタランチ",p:850},{n:"グラスワイン",p:500}]},
+
+  // ── 第3ビル 追加 ──
+  {id:710,name:"麦酒＆洋食スタンド グリル異人館",bld:"第3ビル",fl:"B1F",genre:"洋食",icon:"🍽",price:1000,rating:4.3,dist:150,rec:"ビフテキランチ",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"本格洋食とビールが楽しめる。ビフテキは肉質が良くコスパ◎",
+   menu:[{n:"ビフテキランチ",p:1100,h:true},{n:"ハンバーグランチ",p:950},{n:"日替わり洋食",p:900}]},
+
+  {id:711,name:"天満 七福神 第3ビル店",bld:"第3ビル",fl:"B2F",genre:"串カツ",icon:"🍢",price:800,rating:4.0,dist:150,rec:"串カツ盛り合わせランチ",hours:"12:00〜14:30",closed:"日・祝",isNew:false,worth:false,
+   note:"天満の人気串カツ店の支店。ランチは12時から。ソースが特製",
+   menu:[{n:"串カツ盛り合わせランチ（8本）",p:800,h:false},{n:"串カツ単品",p:90},{n:"ランチセット（10本）",p:1000}]},
+
+  {id:712,name:"さくら月 田ごと",bld:"第3ビル",fl:"B1F",genre:"和食・居酒屋",icon:"🌸",price:850,rating:4.1,dist:150,rec:"唐揚げ定食",hours:"11:30〜14:30",closed:"日・祝",isNew:false,worth:false,
+   note:"和食ベースの居酒屋ランチ。唐揚げが大きくてジューシー",
+   menu:[{n:"唐揚げ定食",p:850,h:true},{n:"刺身定食",p:900},{n:"日替わり定食",p:780}]},
+
+  {id:713,name:"堂山食堂 3号店",bld:"第3ビル",fl:"B1F",genre:"定食",icon:"🍱",price:700,rating:3.9,dist:150,rec:"日替わり定食",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"ガッツリ系の大衆食堂。ボリューム満点で安い。男性に大人気",
+   menu:[{n:"日替わり定食",p:700,h:false},{n:"唐揚げ定食",p:750},{n:"肉野菜炒め定食",p:720}]},
+
+  {id:714,name:"ちょい飲み トリスケ はなれ",bld:"第3ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:700,rating:3.8,dist:150,rec:"日替わりランチ",hours:"11:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"昼から飲める居酒屋。ランチ定食はリーズナブルでボリューム◎",
+   menu:[{n:"日替わりランチ",p:700,h:false},{n:"から揚げ定食",p:750},{n:"生ビール",p:300}]},
+
+  {id:715,name:"カレー百貨 カレー夢",bld:"第3ビル",fl:"B2F",genre:"カレー",icon:"🍛",price:800,rating:4.0,dist:150,rec:"日替わりカレー",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"様々なスタイルのカレーが楽しめる。日替わりで飽きない",
+   menu:[{n:"日替わりカレー",p:800,h:true},{n:"チキンカレー",p:780},{n:"野菜カレー",p:750}]},
+
+  // ── 第4ビル 追加 ──
+  {id:716,name:"神虎 大阪駅前ビル店",bld:"第4ビル",fl:"B1F",genre:"ラーメン",icon:"🍜",price:900,rating:4.4,dist:60,rec:"博多豚骨ラーメン",hours:"11:00〜15:00",closed:"土・日・祝",isNew:false,worth:true,
+   note:"博多豚骨の人気チェーン。替え玉無料が嬉しい。濃厚スープが癖になる",
+   menu:[{n:"博多豚骨ラーメン",p:850,h:true},{n:"辛子高菜ラーメン",p:900},{n:"替え玉",p:0}]},
+
+  {id:717,name:"一貫寿司と天ぷら すしいち",bld:"第4ビル",fl:"B1F",genre:"寿司",icon:"🍣",price:1100,rating:4.3,dist:60,rec:"握り＋天ぷらランチ",hours:"11:30〜14:00",closed:"土・日・祝",isNew:false,worth:true,
+   note:"寿司と天ぷらが両方楽しめる贅沢ランチ。ネタが新鮮で本格的",
+   menu:[{n:"握り＋天ぷらランチセット",p:1200,h:true},{n:"握り10貫",p:1000},{n:"天ぷら定食",p:950}]},
+
+  {id:718,name:"串かつ でんがな 第4ビル店",bld:"第4ビル",fl:"B2F",genre:"串カツ",icon:"🍢",price:750,rating:4.2,dist:60,rec:"串カツランチセット",hours:"11:00〜14:00",closed:"土・日",isNew:false,worth:true,
+   note:"駅前ビルに複数展開するでんがなグループ。衣が薄くサクサク。二度漬け禁止",
+   menu:[{n:"串カツランチセット（8本）",p:750,h:true},{n:"串カツランチセット（12本）",p:1050},{n:"単品各種",p:88}]},
+
+  {id:719,name:"でんがな 第3ビル店",bld:"第3ビル",fl:"B1F",genre:"串カツ",icon:"🍢",price:750,rating:4.2,dist:150,rec:"串カツランチセット",hours:"11:00〜14:00",closed:"土・日",isNew:false,worth:false,
+   note:"でんがなグループ第3ビル店。ランチ限定お得セットあり",
+   menu:[{n:"串カツランチセット（8本）",p:750,h:false},{n:"串カツランチセット（12本）",p:1050},{n:"単品各種",p:88}]},
+
+  {id:720,name:"でんがな 第2ビル店",bld:"第2ビル",fl:"B2F",genre:"串カツ",icon:"🍢",price:750,rating:4.1,dist:180,rec:"串カツランチセット",hours:"11:00〜14:00",closed:"土・日",isNew:false,worth:false,
+   note:"でんがなグループ第2ビル店",
+   menu:[{n:"串カツランチセット（8本）",p:750,h:false},{n:"単品各種",p:88}]},
+
+  // ════════ asayama.info 掲載店（未収録分） ════════
+
+  // ── 第1ビル ──
+  {id:801,name:"串揚げ たぬき",bld:"第1ビル",fl:"B2F",genre:"串カツ",icon:"🍢",price:900,rating:4.4,dist:250,rec:"串揚げランチセット",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"旧・串揚げ起世。伝統の串揚げが食べられる名店。衣が軽くサクッとした食感",
+   menu:[{n:"串揚げランチセット",p:900,h:true},{n:"串揚げ単品",p:110},{n:"定食セット",p:1100}]},
+
+  {id:802,name:"吉豊",bld:"第1ビル",fl:"B2F",genre:"居酒屋・立呑み",icon:"🍺",price:700,rating:4.0,dist:250,rec:"日替わり定食",hours:"12:00〜14:00",closed:"日・祝",isNew:false,worth:false,
+   note:"銀座屋近くにある立呑み。生ビールがリーズナブル。ランチも充実",
+   menu:[{n:"日替わり定食",p:700,h:false},{n:"一品料理各種",p:300},{n:"生ビール",p:420}]},
+
+  // ── 第2ビル ──
+  {id:803,name:"エキビルダイナー マチソワ",bld:"第2ビル",fl:"B2F",genre:"洋食",icon:"🍽",price:950,rating:4.2,dist:180,rec:"日替わりランチプレート",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"2025年10月オープン。おしゃれな内装が特徴。日替わりランチはボリューム満点",
+   menu:[{n:"日替わりランチプレート",p:950,h:true},{n:"パスタランチ",p:900},{n:"ビール",p:550}]},
+
+  {id:804,name:"らーめんチョンマゲ 大阪梅田店",bld:"第2ビル",fl:"B2F",genre:"ラーメン",icon:"🍜",price:900,rating:4.4,dist:180,rec:"チョンマゲラーメン",hours:"11:00〜15:00",closed:"日・祝",isNew:false,worth:true,
+   note:"高知発祥の人気ラーメン店。スープが絶品でリピーター続出。2023年オープン",
+   menu:[{n:"チョンマゲラーメン",p:900,h:true},{n:"塩ラーメン",p:850},{n:"替え玉",p:100}]},
+
+  {id:805,name:"ワンダーステーキ 大阪駅前第2ビル店",bld:"第2ビル",fl:"B1F",genre:"肉料理",icon:"🥩",price:1100,rating:4.4,dist:180,rec:"ステーキランチ",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"ランチからステーキが食べられる。コスパが高くボリューム満点。常に行列ができる人気店",
+   menu:[{n:"ステーキランチ",p:1100,h:true},{n:"ハンバーグステーキランチ",p:950},{n:"どんぶりメニュー",p:850}]},
+
+  {id:806,name:"至極の麺 華",bld:"第2ビル",fl:"B2F",genre:"担担麺",icon:"🌶",price:850,rating:4.4,dist:180,rec:"台湾まぜそば",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"台湾まぜそばと担担麺の専門店。スープの深みが特徴。大盛り無料でコスパ抜群",
+   menu:[{n:"台湾まぜそば",p:850,h:true},{n:"台湾赤担々麺",p:880},{n:"大盛り",p:0}]},
+
+  // ── 第3ビル ──
+  {id:807,name:"花こよみ",bld:"第3ビル",fl:"B1F",genre:"和食・居酒屋",icon:"🌸",price:920,rating:4.4,dist:150,rec:"変わりとんかつ定食",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"1987年創業の老舗。定食は一律920円でどれも丁寧な仕事。変わりとんかつが特に評判",
+   menu:[{n:"変わりとんかつ定食",p:920,h:true},{n:"豚の角煮定食",p:920},{n:"日替わり定食",p:920}]},
+
+  {id:808,name:"韓国式屋台 アリランポチャ",bld:"第3ビル",fl:"B2F",genre:"韓国料理",icon:"🥩",price:900,rating:4.3,dist:150,rec:"サムギョプサル定食",hours:"11:30〜14:00",closed:"日・祝",isNew:false,worth:true,
+   note:"本格韓国屋台スタイル。サムギョプサルやチヂミが絶品。コスパ抜群で人気",
+   menu:[{n:"サムギョプサル定食",p:950,h:true},{n:"チャプチェ定食",p:880},{n:"ビビンバランチ",p:850}]},
+
+  {id:809,name:"海鮮屋台 新鮮組 梅田店",bld:"第3ビル",fl:"B1F",genre:"海鮮",icon:"🐟",price:800,rating:4.2,dist:150,rec:"刺身定食",hours:"11:00〜14:30",closed:"日・祝",isNew:false,worth:true,
+   note:"新鮮な海鮮が売りの居酒屋。ランチの刺身定食がコスパ最強。生ビールも激安",
+   menu:[{n:"刺身定食",p:800,h:true},{n:"海鮮丼",p:850},{n:"焼き魚定食",p:750}]},
+
+  // ── 第4ビル ──
+  {id:810,name:"大衆飯店 十八番",bld:"第4ビル",fl:"B2F",genre:"中華",icon:"🥟",price:850,rating:3.8,dist:60,rec:"満腹餃子",hours:"17:00〜23:00",closed:"日・祝",isNew:true,worth:false,
+   note:"2026年3月オープン。電飾が特徴的な中華居酒屋。瓶ビールが激安で話題。ランチは非営業",
+   menu:[{n:"満腹餃子（巨大）",p:748,h:true},{n:"十八番焼売",p:638},{n:"蒸し鶏の香味ネギソース",p:605}]},
+];
+
+// ═══════════════════════════════════════
+// USER REVIEWS（GASスプレッドシートで全員共有）
+// ローカルキャッシュで高速表示、投稿はGASに送信
+// ═══════════════════════════════════════
+const REVIEW_CACHE = {}; // { shopId: { reviews, avg, count, loadedAt } }
+
+// キャッシュから評価を取得（即時）
+function getCachedRating(shopId) {
+  const c = REVIEW_CACHE[shopId];
+  return c ? c.avg : null;
+}
+function getCachedCount(shopId) {
+  const c = REVIEW_CACHE[shopId];
+  return c ? c.count : 0;
+}
+
+// GASからユーザー口コミを取得してキャッシュに保存
+async function fetchUserReviews(shopId) {
+  if (!GAS_URL) return { reviews:[], avg:null, count:0 };
+  // 5分以内にロード済みならキャッシュを使う
+  const c = REVIEW_CACHE[shopId];
+  if (c && Date.now() - c.loadedAt < 5*60*1000) return c;
+  try {
+    const res  = await fetch(`${GAS_URL}?action=getUserReviews&shopId=${shopId}`);
+    const data = await res.json();
+    REVIEW_CACHE[shopId] = { ...data, loadedAt: Date.now() };
+    return REVIEW_CACHE[shopId];
+  } catch(e) {
+    return { reviews:[], avg:null, count:0 };
+  }
+}
+
+// GASに口コミを投稿（POST）
+async function postReviewToGAS(shopId, shopName, name, rating, comment) {
+  if (!GAS_URL) return { success: false };
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action:"postReview", shopId, shopName, name, rating, comment }),
+  });
+  return await res.json();
+}
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let S = { genre:"all", bld:"all", budget:"all", sort:"rating", view:"grid", search:"" };
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.getElementById("newsTxt").textContent = NEWS.join("　　　／　　　");
+  render(); updateStats(SHOPS);
+
+  // filters
+  document.getElementById("genreChips").addEventListener("click", e=>{
+    const b = e.target.closest(".chip"); if(!b) return;
+    document.querySelectorAll("#genreChips .chip").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); S.genre = b.dataset.v; render();
+  });
+  document.getElementById("bldChips").addEventListener("click", e=>{
+    const b = e.target.closest(".chip"); if(!b) return;
+    document.querySelectorAll("#bldChips .chip").forEach(x=>{x.classList.remove("on","b")});
+    b.classList.add("on"); if(b.dataset.v!=="all") b.classList.add("b");
+    S.bld = b.dataset.v; render();
+  });
+  document.getElementById("budgetSel").onchange = e=>{ S.budget=e.target.value; render(); };
+  document.getElementById("sortSel").onchange = e=>{ S.sort=e.target.value; render(); };
+  document.getElementById("searchInput").oninput = e=>{ S.search=e.target.value.trim(); render(); };
+  document.getElementById("btnGrid").onclick = ()=>{ S.view="grid"; document.getElementById("btnGrid").classList.add("on"); document.getElementById("btnList").classList.remove("on"); render(); };
+  document.getElementById("btnList").onclick = ()=>{ S.view="list"; document.getElementById("btnList").classList.add("on"); document.getElementById("btnGrid").classList.remove("on"); render(); };
+  document.getElementById("moverlay").onclick = e=>{ if(e.target===e.currentTarget) closeModal(); };
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+});
+
+// ═══════════════════════════════════════
+// FILTER + SORT
+// ═══════════════════════════════════════
+function filtered() {
+  let list = [...SHOPS];
+  if (S.genre!=="all") list = list.filter(s=>s.genre===S.genre);
+  if (S.bld!=="all")   list = list.filter(s=>s.bld===S.bld);
+  if (S.budget!=="all") list = list.filter(s=>s.price<=parseInt(S.budget));
+  if (S.search) {
+    const q=S.search.toLowerCase();
+    list = list.filter(s=>s.name.toLowerCase().includes(q)||s.genre.toLowerCase().includes(q)||s.rec.toLowerCase().includes(q)||s.note.toLowerCase().includes(q));
+  }
+  const sorters = {
+    rating: (a,b)=>b.rating-a.rating,
+    user_rating: (a,b)=>(getUserRating(b.id)||0)-(getUserRating(a.id)||0),
+    price_asc: (a,b)=>a.price-b.price,
+    price_desc: (a,b)=>b.price-a.price,
+    distance: (a,b)=>a.dist-b.dist,
+    new: (a,b)=>(b.isNew?1:0)-(a.isNew?1:0),
+  };
+  list.sort(sorters[S.sort]||sorters.rating);
+  return list;
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+function stars(r, size=12) {
+  let h=""; const f=Math.floor(r);
+  for(let i=0;i<f;i++) h+=`<span class="star" style="font-size:${size}px">★</span>`;
+  if(r-f>=0.5) h+=`<span class="star" style="font-size:${size}px;opacity:.5">★</span>`;
+  return h;
+}
+function walkMin(d){ return Math.max(1,Math.ceil(d/80)); }
+
+function render() {
+  const list = filtered();
+  const worth = list.filter(s=>s.worth).length;
+  document.getElementById("metaCount").textContent = list.length+"件";
+  document.getElementById("metaWorth").innerHTML = worth>0 ? `<span style="color:var(--gold);margin-left:6px">★行く価値あり ${worth}件</span>` : "";
+
+  const area = document.getElementById("shopArea");
+  if(!list.length) {
+    area.className=""; area.innerHTML=`<div class="empty"><div class="empty-ic">🔍</div><p>条件に合うお店が見つかりませんでした</p></div>`; return;
+  }
+
+  if(S.view==="grid") {
+    area.className="grid";
+    area.innerHTML = list.map(s=>{
+      const ur = getCachedRating(s.id);
+      const rc = getCachedCount(s.id);
+      return `<div class="card${s.isNew?" isnew":""}${s.worth?" isw":""}" onclick="openModal(${s.id})">
+        <div class="bdg-row">
+          ${s.isNew?'<span class="bdg bdg-new">NEW</span>':""}
+          ${s.worth?'<span class="bdg bdg-w">★おすすめ</span>':""}
+          <span class="bdg bdg-ln">ランチ</span>
+        </div>
+        <div class="card-icon">${s.icon}</div>
+        <div class="card-name">${s.name}</div>
+        <div class="card-bld">🏢 ${s.bld} ${s.fl}</div>
+        <span class="card-genre">${s.genre}</span>
+        <div class="card-bottom">
+          <div class="card-price">〜¥${s.price.toLocaleString()} <span>/人</span></div>
+          <div class="card-rating">${stars(s.rating)} ${s.rating.toFixed(1)}</div>
+        </div>
+        <div class="card-dist">🚶 徒歩約${walkMin(s.dist)}分</div>
+        ${ur!==null?`<div class="user-rating-bar">${stars(ur,13)}<span class="u-count">みんなの評価 ${ur.toFixed(1)}（${rc}件）</span></div>`:""}
+        <div class="card-rec">💬 ${s.rec}</div>
+      </div>`;
+    }).join("");
+  } else {
+    area.className="lst";
+    area.innerHTML = list.map(s=>{
+      const ur = getCachedRating(s.id);
+      const rc = getCachedCount(s.id);
+      return `<div class="lrow" onclick="openModal(${s.id})">
+        <div class="lrow-icon">${s.icon}</div>
+        <div class="lrow-info">
+          <div class="lrow-name">${s.name}${s.isNew?' <span class="bdg bdg-new" style="font-size:9px">NEW</span>':""}</div>
+          <div class="lrow-sub">${s.bld} ${s.fl} ・ ${s.genre} ・ ${stars(s.rating,11)} ${s.rating.toFixed(1)}${ur!==null?` ・ 👥${ur.toFixed(1)}(${rc}件)`:""}
+          </div>
+        </div>
+        <div class="lrow-r">
+          <div class="lrow-price">〜¥${s.price.toLocaleString()}</div>
+          <div class="lrow-dist">🚶${walkMin(s.dist)}分</div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+}
+
+function updateStats(shops) {
+  document.getElementById("sTotal").textContent  = shops.length;
+  document.getElementById("sNew").textContent    = shops.filter(s=>s.isNew).length;
+  document.getElementById("sWorth").textContent  = shops.filter(s=>s.worth).length;
+  document.getElementById("sUnder").textContent  = shops.filter(s=>s.price<=800).length;
+}
+
+// ═══════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════
+let currentShopId = null;
+let pickedRating = 0;
+
+function openModal(id) {
+  currentShopId = id; pickedRating = 0;
+  const s = SHOPS.find(x=>x.id===id); if(!s) return;
+  const ur = getCachedRating(id);
+  const rc = getCachedCount(id);
+
+  document.getElementById("minner").innerHTML = `
+    <div class="mhdr">
+      <button class="mclose" onclick="closeModal()">✕</button>
+      <div class="bdg-row">
+        ${s.isNew?'<span class="bdg bdg-new">NEW</span>':""}
+        ${s.worth?'<span class="bdg bdg-w">★行く価値あり</span>':""}
+        <span id="openNowBadge"></span>
+      </div>
+      <div style="font-size:26px;margin-bottom:3px">${s.icon}</div>
+      <div class="mtitle">${s.name}</div>
+      <div class="msub">
+        <span>🏢 ${s.bld} ${s.fl}</span><span>・</span>
+        <span>${s.genre}</span><span>・</span>
+        <span>${stars(s.rating)} ${s.rating.toFixed(1)}</span>
+        ${ur!==null?`<span>・</span><span>👥 ${ur.toFixed(1)}（${reviews.length}件）</span>`:""}
+      </div>
+    </div>
+    <div class="mbody">
+      <div class="mdiv"></div>
+      <div class="info-grid">
+        <div class="info-box"><div class="info-lbl">予算目安</div><div class="info-val">〜¥${s.price.toLocaleString()}</div></div>
+        <div class="info-box"><div class="info-lbl">評価</div><div class="info-val" style="font-size:13px">${stars(s.rating)} ${s.rating.toFixed(1)}<div id="gRating" style="font-size:11px;color:var(--text3);margin-top:1px"></div></div></div>
+        <div class="info-box"><div class="info-lbl">営業時間</div><div class="info-val" style="font-size:12px">${s.hours}<div id="todayH" style="font-size:11px;color:var(--text3)"></div></div></div>
+        <div class="info-box"><div class="info-lbl">定休日</div><div class="info-val" style="font-size:13px">${s.closed}</div></div>
+      </div>
+
+      <div class="sec-ttl">おすすめメニュー</div>
+      <div class="menu-lst">
+        ${s.menu.map(m=>`<div class="menu-row"><span class="menu-nm">${m.n}${m.h?'<span class="hot">人気</span>':""}</span><span class="menu-pr">¥${typeof m.p==="string"?m.p:m.p.toLocaleString()}</span></div>`).join("")}
+      </div>
+
+      <div class="sec-ttl">スタッフメモ</div>
+      <div class="note-box">💡 ${s.note}</div>
+
+      <div id="aiMenus"></div>
+
+      <div class="sec-ttl">Google マップ</div>
+      <div class="map-box" id="mapBox">
+        <iframe src="https://www.google.com/maps/embed/v1/search?key=${MAPS_KEY}&q=${encodeURIComponent(s.name+" 大阪市北区梅田 大阪駅前"+s.bld)}&language=ja&region=JP" allowfullscreen loading="lazy"></iframe>
+      </div>
+
+      <div class="sec-ttl">みんなの口コミ・評価</div>
+      <div class="review-form">
+        <div class="review-form-title">⭐ 評価を投稿する（全員に共有されます）</div>
+        <div class="star-select" id="starSelect">
+          ${[1,2,3,4,5].map(n=>`<span class="star-pick" data-n="${n}" onclick="pickStar(${n})">★</span>`).join("")}
+        </div>
+        <input class="review-name" id="rName" placeholder="名前（空欄で匿名）" maxlength="20">
+        <textarea class="review-txt" id="rTxt" placeholder="コメントを入力...（任意・200文字まで）" maxlength="200"></textarea>
+        <button class="review-submit" onclick="submitReview()">投稿する</button>
+        <div id="rMsg" style="font-size:12px;margin-top:4px"></div>
+      </div>
+
+      <div id="reviewsList">
+        <div style="font-size:12px;color:var(--text3);padding:4px 0;text-align:center">口コミを読み込み中...</div>
+      </div>
+
+      <div class="mdiv"></div>
+      <div class="mactions">
+        <button class="mbtn" onclick="closeModal()">← 戻る</button>
+        <button class="mbtn primary" onclick="window.open('https://www.google.com/maps/search/${encodeURIComponent(s.name+" 大阪駅前"+s.bld)}','_blank')">🗺 大きな地図</button>
+      </div>
+    </div>`;
+
+  document.getElementById("moverlay").classList.add("open");
+  document.body.style.overflow="hidden";
+
+  // GAS連携（口コミ・営業中判定）
+  if(GAS_URL) loadGASReviews(s);
+}
+
+function closeModal() {
+  document.getElementById("moverlay").classList.remove("open");
+  document.body.style.overflow="";
+  currentShopId=null; pickedRating=0;
+}
+
+// 星選択
+function pickStar(n) {
+  pickedRating = n;
+  document.querySelectorAll(".star-pick").forEach((el,i)=>{
+    el.classList.toggle("lit", i<n);
+  });
+}
+
+// レビュー投稿（GASスプレッドシートに保存）
+async function submitReview() {
+  if(!currentShopId) return;
+  const msg = document.getElementById("rMsg");
+  if(!pickedRating) { msg.textContent="★ 星を選んでください"; return; }
+
+  const s    = SHOPS.find(x=>x.id===currentShopId);
+  const name = (document.getElementById("rName").value.trim())||"匿名";
+  const text = document.getElementById("rTxt").value.trim();
+
+  // ボタン無効化・送信中表示
+  const btn = document.querySelector(".review-submit");
+  btn.disabled = true; btn.textContent = "送信中...";
+  msg.style.color="var(--text3)"; msg.textContent="";
+
+  try {
+    const result = await postReviewToGAS(currentShopId, s?s.name:"", name, pickedRating, text);
+    if(result.success) {
+      // キャッシュをクリアして再取得
+      delete REVIEW_CACHE[currentShopId];
+      msg.style.color="var(--green)";
+      msg.textContent="✅ 投稿しました！みんなに共有されます";
+      btn.textContent="投稿済み ✅";
+      // 口コミリストを即更新
+      const data = await fetchUserReviews(currentShopId);
+      updateReviewsList(data);
+      render(); // カード上の評価も更新
+    } else {
+      msg.style.color="var(--red)";
+      msg.textContent="❌ 投稿に失敗しました。もう一度お試しください";
+      btn.disabled = false; btn.textContent="投稿する";
+    }
+  } catch(e) {
+    msg.style.color="var(--red)";
+    msg.textContent="❌ 通信エラー。Wi-Fiを確認してください";
+    btn.disabled = false; btn.textContent="投稿する";
+  }
+}
+
+// 口コミリストのHTML更新
+function updateReviewsList(data) {
+  const el = document.getElementById("reviewsList");
+  if(!el) return;
+  if(!data.reviews || !data.reviews.length) {
+    el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px 0">まだ口コミがありません。最初の投稿者になりましょう！</div>';
+    return;
+  }
+  el.innerHTML = data.reviews.map(r=>`
+    <div class="review-item">
+      <div class="review-item-hdr">
+        <span class="review-author">${r.name||"匿名"}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="review-stars">${"★".repeat(Math.min(5,r.rating||0))}</span>
+          <span class="review-date">${r.date||""}</span>
+        </div>
+      </div>
+      ${r.comment?`<div class="review-body">${r.comment}</div>`:""}
+    </div>`).join("");
+}
+
+// GAS連携（Googleマップ情報 + ユーザー口コミ）
+async function loadGASReviews(shop) {
+  // ユーザー口コミをGASから取得して表示
+  fetchUserReviews(shop.id).then(data=>{
+    // モーダルのタイトル部分の評価を更新
+    if(data.avg && data.count) {
+      const msub = document.querySelector(".msub");
+      if(msub) {
+        const existing = document.getElementById("userRatingBadge");
+        if(!existing) {
+          const span = document.createElement("span");
+          span.id="userRatingBadge";
+          span.innerHTML=`<span>・</span><span>👥 ${data.avg.toFixed(1)}（${data.count}件）</span>`;
+          msub.appendChild(span);
+        }
+      }
+    }
+    updateReviewsList(data);
+    render(); // カード評価も更新
+  });
+
+  // Google Places情報を取得
+  if(!GAS_URL) return;
+  try {
+    const res = await fetch(`${GAS_URL}?action=getReviews&name=${encodeURIComponent(shop.name)}&building=${encodeURIComponent(shop.bld)}`);
+    const data = await res.json();
+    if(data.googleRating) {
+      const el = document.getElementById("gRating");
+      if(el) el.textContent = `Google: ${data.googleRating.toFixed(1)}（${data.reviewCount}件）`;
+    }
+    if(data.isOpenNow!=null) {
+      const el = document.getElementById("openNowBadge");
+      if(el) {
+        const now = new Date(); const mins = now.getHours()*60+now.getMinutes();
+        const isLunchTime = mins >= 11*60 && mins <= 15*60+30;
+        const isOpen = data.isOpenNow || isLunchTime;
+        el.innerHTML = isOpen
+          ? '<span class="bdg" style="background:var(--green-bg);color:var(--green)">● 営業中</span>'
+          : '<span class="bdg" style="background:var(--red-bg);color:var(--red)">● 本日閉店</span>';
+      }
+    }
+    if(data.todayHours) {
+      const el = document.getElementById("todayH");
+      if(el) el.textContent = "本日: "+data.todayHours;
+    }
+    if(data.aiMenus && data.aiMenus.length) {
+      const el = document.getElementById("aiMenus");
+      if(el) el.innerHTML = `<div class="sec-ttl" style="margin-top:10px">🤖 口コミから抽出したメニュー</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">${data.aiMenus.map(m=>`<span style="background:var(--red-bg);color:var(--red);font-size:12px;padding:3px 9px;border-radius:10px">${m}</span>`).join("")}</div>`;
+    }
+    if(data.photoUrl) {
+      const box = document.getElementById("mapBox");
+      if(box) box.innerHTML = `<img src="${data.photoUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"><iframe src="https://www.google.com/maps/embed/v1/search?key=${MAPS_KEY}&q=${encodeURIComponent(shop.name+" 大阪市北区梅田 大阪駅前"+shop.bld)}&language=ja" allowfullscreen loading="lazy" style="width:100%;height:100%;border:none"></iframe>`;
+    }
+  } catch(e) {}
+}
+
+// GASから店舗データ同期 + ニュース取得
+async function syncFromGAS() {
+  if(!GAS_URL) return;
+
+  // ① ニュースをGASから取得してティッカーを更新
+  try {
+    const newsRes  = await fetch(`${GAS_URL}?action=getNews`);
+    const newsData = await newsRes.json();
+    if(newsData.news && newsData.news.length > 0) {
+      const items = newsData.news.map(n =>
+        `🆕 ${n.date} ${n.building}${n.floor}「${n.name}」${n.note ? "（"+n.note+"）" : ""}`
+      );
+      // 既存NEWSと合体
+      const allNews = [...items, ...NEWS];
+      document.getElementById("newsTxt").textContent = allNews.join("　　　／　　　");
+    }
+  } catch(e) {}
+
+  // ② 店舗データをGASから同期（内蔵より多い場合のみ反映）
+  try {
+    document.getElementById("syncBadge").textContent="📡 同期中...";
+    const res  = await fetch(`${GAS_URL}?action=getShops`);
+    const data = await res.json();
+
+    if(data.shops && data.shops.length > SHOPS.length) {
+      // GASの新規追加分だけ内蔵データに追加（重複除外）
+      const existingIds = new Set(SHOPS.map(s=>s.id));
+      const newFromGAS  = data.shops.filter(s => !existingIds.has(s.id) && s.lunch !== false);
+
+      if(newFromGAS.length > 0) {
+        // GAS新店を内蔵データに追加して再描画
+        newFromGAS.forEach(s => SHOPS.push(s));
+        updateStats(SHOPS);
+        render();
+        document.getElementById("syncBadge").textContent =
+          `✅ ${newFromGAS.length}件の新店を追加`;
+        setTimeout(() => {
+          document.getElementById("syncBadge").textContent =
+            `✅ ${new Date(data.updatedAt).toLocaleDateString("ja-JP")}更新`;
+        }, 3000);
+      } else {
+        document.getElementById("syncBadge").textContent = "✅ 最新データ";
+      }
+    } else {
+      document.getElementById("syncBadge").textContent = "✅ 最新データ";
+    }
+  } catch(e) {
+    document.getElementById("syncBadge").textContent = "📋 内蔵データ";
+  }
+}
+syncFromGAS();
+</script>
+</body>
+</html>
