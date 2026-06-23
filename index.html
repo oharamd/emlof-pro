@@ -759,35 +759,25 @@ async function fetchUserReviews(shopId) {
   }
 }
 
-// GASに口コミを投稿（フォームエンコード方式でCORSを回避）
+// GASに口コミを投稿（リダイレクト対応版）
 async function postReviewToGAS(shopId, shopName, name, rating, comment) {
   if (!GAS_URL) return { success: false };
-  // GASはno-corsだとレスポンスが読めないが投稿は成功する
-  // FormDataを使ってPOSTする
+  const getUrl = `${GAS_URL}?action=postReview&shopId=${encodeURIComponent(shopId)}&shopName=${encodeURIComponent(shopName)}&name=${encodeURIComponent(name)}&rating=${rating}&comment=${encodeURIComponent(comment)}`;
   try {
-    const params = new URLSearchParams();
-    params.append("action",   "postReview");
-    params.append("shopId",   shopId);
-    params.append("shopName", shopName);
-    params.append("name",     name);
-    params.append("rating",   rating);
-    params.append("comment",  comment);
-
-    // GAS URL に直接GETパラメータとして送る方法（CORSを完全回避）
-    const getUrl = `${GAS_URL}?action=postReview&shopId=${encodeURIComponent(shopId)}&shopName=${encodeURIComponent(shopName)}&name=${encodeURIComponent(name)}&rating=${rating}&comment=${encodeURIComponent(comment)}`;
-    const res = await fetch(getUrl);
-    const data = await res.json();
-    return data;
-  } catch(e) {
-    // フォールバック: no-corsで送信（レスポンスは読めないが投稿は成功）
+    const res = await fetch(getUrl, { redirect: "follow" });
+    const text = await res.text();
+    // レスポンスがJSONかチェック
     try {
-      await fetch(GAS_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action:"postReview", shopId, shopName, name, rating, comment }),
-      });
-      return { success: true }; // no-corsでは成功と仮定
+      return JSON.parse(text);
+    } catch(_) {
+      // HTMLが返ってきた場合（リダイレクト後）も成功とみなす
+      return { success: true };
+    }
+  } catch(e) {
+    // no-corsフォールバック
+    try {
+      await fetch(getUrl, { mode: "no-cors" });
+      return { success: true };
     } catch(e2) {
       return { success: false };
     }
